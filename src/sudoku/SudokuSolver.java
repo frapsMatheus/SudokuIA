@@ -7,7 +7,7 @@ import java.util.List;
  */
 public class SudokuSolver {
 
-	
+	//Variable used to verify if a solution was found at some moment in the AI.
 	private int foundSolution=99;
 	
 	/**
@@ -25,11 +25,10 @@ public class SudokuSolver {
 	 * @return the solved Sudoku board
 	 */
 	public int[][] solve(int[][] board) {
-		int i=0,j=0,k=0,l=0;
+		int i=0,j=0;
 		foundSolution=99;
 		Cell[][] tempboard = new Cell[9][9];
 		//Start tempboard with board
-		
 		for(i=0;i<9;i++){
 			for(j=0;j<9;j++){
 				tempboard[i][j]=new Cell();
@@ -38,7 +37,7 @@ public class SudokuSolver {
 				}
 			}
 		}
-		
+		//Enter the recursive CSP with split domain
 		tempboard = constrainVerification(0,0,tempboard[0][0].valueDomain,tempboard);
 		//Return result
 		int[][] finalBoard = new int[9][9];
@@ -50,12 +49,13 @@ public class SudokuSolver {
 		return finalBoard;
 	}
 	
+	//CSP with split domain algorithm
 	private Cell[][] constrainVerification(int cellX, int cellY, List<Integer> domainSplit,Cell[][] board){
 		int constraintValidationCounter=0;
 		int i=0,j=0,k=0,l=0;
 		int x=0,y=0;
 		int size=9;
-		
+		//Multiple board for fixing problems with values being changed when used as input
 		Cell[][] tempboard = new Cell[9][9];
 		Cell[][] tempboardLeft = new Cell[9][9];
 		Cell[][] tempboardRight = new Cell[9][9];
@@ -68,7 +68,8 @@ public class SudokuSolver {
 				}
 			}
 		}
-		//Atribute Split Domain
+		
+		//Atribute splited domain of variable of the cell to itself 
 		tempboard[cellX][cellY].valueDomain.clear();
 		for(i=0;i<domainSplit.size();i++){
 			tempboard[cellX][cellY].valueDomain.add(domainSplit.get(i));
@@ -111,9 +112,11 @@ public class SudokuSolver {
 				         }
 				    }
 				}
+				//Sum made to verify the number of constraint problems
 				constraintValidationCounter=constraintValidationCounter+(tempboard[i][j].valueDomain.size()-1);
 			}
 		}
+		//Found a solution with no constraint problem
 		if(constraintValidationCounter==0){
 			foundSolution=0;
 			return tempboard;
@@ -126,6 +129,7 @@ public class SudokuSolver {
 		      		x=i;
 		      		y=j;
 		      	}
+		      	//Breaks used to reduced the number the size of the for when possible
 		      	if(size==2){
 		      		break;
 		      	}
@@ -136,8 +140,7 @@ public class SudokuSolver {
 		}
 		//Divide list
 		if(size!=9){
-			
-			//Copy board to left and right
+			//Copy board to left and right temporary board, used for fixing the input board problem where the values of the input were changing
 			for(i=0;i<9;i++){
 				for(j=0;j<9;j++){
 					tempboardLeft[i][j]= new Cell();
@@ -154,6 +157,7 @@ public class SudokuSolver {
 					}
 				}
 			}
+			//Split the domain of the variable chosen in two sides, left and right
 			List<Integer> leftList = new ArrayList<Integer>();
 			List<Integer> rightList = new ArrayList<Integer>();
 			for(i=0;i<size/2;i++){
@@ -162,21 +166,32 @@ public class SudokuSolver {
 			for(i=size/2;i<size;i++){
 				rightList.add(tempboard[x][y].valueDomain.get(i));
 			}	
+			//Run trough left arc, enter this function until is not possible
 			tempboard2 = constrainVerification(x,y,leftList,tempboardLeft);
+			//Verify if a solution was found to avoid running unnecessary times
 			if(foundSolution==0){
 				return tempboard2;
 			}else{
+				//Enter the right arc
 				tempboard2 = constrainVerification(x,y,rightList,tempboardRight);
 			}
 		}
+		//Return the final value
 		return tempboard2;
 	}
 	
 }
 
+
+//Class created to manage the behavior of a cell. Its domain and the value that was chosen.
 class Cell{
+	
+	//Domain that is a list that can have values {1,2,...,9}
 	List<Integer> valueDomain; 
+	//Value that represents the number that was placed on the cell, 
+	//basically represents the value of the list when with only one element or 0 if there are more elements.
 	int fixedValue=0;
+	//Start every cell with the maximum domain
 	public Cell(){
 		int i=1;
 		valueDomain = new ArrayList<Integer>();
@@ -184,7 +199,7 @@ class Cell{
 			valueDomain.add(i);
 		}
 	}
-	
+	//Function used to remove one value from the domain list at a cell, helpful to verify constraints
 	public int removeValue(int boardCell){
 		for(int i=0;i<valueDomain.size();i++){
 			if(boardCell==valueDomain.get(i)){
@@ -199,7 +214,7 @@ class Cell{
 		}
 		return valueDomain.size();
 	}
-	
+	//Function used to remove all values from the domain list that are not the input, helpful to initialize a cell
 	public int removeNotValue(int boardCell){
 		for(int i=0;i<valueDomain.size();i++){
 			if(boardCell!=valueDomain.get(i)){
